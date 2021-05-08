@@ -1,6 +1,7 @@
 package users_db
 
 import (
+	//"os"
 	"database/sql"
 	"fmt"
 	"log"
@@ -21,25 +22,29 @@ import (
 */
 
 
+const (
+	mysql_users_username  = "mysql_users_username "
+	mysql_users_password  = "mysql_users_password"
+	mysql_users_host      = "mysql_users_host" 		//comes from docker network config
+	mysql_users_schema    = "mysql_users_schema"
+)
+
 
 var (
 	Client *sql.DB
-)
-
-const (
-	mysql_users_username  = ""
-	mysql_users_password  = ""
-	mysql_users_host      = "172.18.0.3" //comes from docker network config
-	mysql_users_schema    = ""
+	// username = os.Getenv(mysql_users_username)
+	// password = os.Getenv(mysql_users_password)
+	// host 	 = os.Getenv(mysql_users_host)
+	// schema 	 = os.Getenv(mysql_users_schema)
+	username = "root"
+	password = "toor"
+	host 	 = "127.18.0.3"
+	schema 	 = "users_db"
+	
 )
 
 func init() {
-	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8",
-		"root",
-		"toor",
-		mysql_users_host,
-		"users_db",
-	)
+	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8",username,password,host,schema)
 
 	var err error
 	Client, err = sql.Open("mysql", dataSourceName)
