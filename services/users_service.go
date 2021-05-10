@@ -8,8 +8,23 @@ import (
 )
 
 
+var (
+	UsersService UsersServiceInterface = &usersService{}
+)
 
-func CreateUser(user users.User) (*users.User, *errors.RestErr){
+
+type usersService struct {
+}
+
+type UsersServiceInterface interface {
+	CreateUser(users.User) (*users.User, *errors.RestErr)
+	GetUser(int64) (*users.User, *errors.RestErr)
+	UpdateUser(bool, users.User) (*users.User, *errors.RestErr)
+	DeleteUser(int64) *errors.RestErr
+	SearchUser(string) (users.Users, *errors.RestErr)
+}
+
+func (s *usersService) CreateUser(user users.User) (*users.User, *errors.RestErr){
 	if err := user.Validate(); err != nil {
 		return nil, err
 	}
@@ -24,7 +39,7 @@ func CreateUser(user users.User) (*users.User, *errors.RestErr){
 }
 
 
-func GetUser(userId int64) (*users.User, *errors.RestErr){
+func (s *usersService) GetUser(userId int64) (*users.User, *errors.RestErr){
 	if userId <= 0 {
 		return nil, errors.NewBadRequestError("invalid user id")
 	}
@@ -41,8 +56,8 @@ func GetUser(userId int64) (*users.User, *errors.RestErr){
 }
 
 
-func UpdateUser(isPartial bool, user users.User) (*users.User, *errors.RestErr) {
-	currentUser, err := GetUser(user.Id)
+func (s *usersService) UpdateUser(isPartial bool, user users.User) (*users.User, *errors.RestErr) {
+	currentUser, err := UsersService.GetUser(user.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +88,8 @@ func UpdateUser(isPartial bool, user users.User) (*users.User, *errors.RestErr) 
 
 
 
-func DeleteUser(userId int64) *errors.RestErr {
-	currentUser, err := GetUser(userId)
+func (s *usersService) DeleteUser(userId int64) *errors.RestErr {
+	currentUser, err := UsersService.GetUser(userId)
 	if err != nil {
 		return err
 	}
@@ -88,7 +103,7 @@ func DeleteUser(userId int64) *errors.RestErr {
 
 
 
-func Search(status string) (users.Users, *errors.RestErr) {
+func (s *usersService) SearchUser(status string) (users.Users, *errors.RestErr) {
 	dao := users.User{}
 	return dao.FindByStatus(status)	
 }
