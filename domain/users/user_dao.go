@@ -11,12 +11,13 @@ import (
 
 
 const (
-	errNoRow	          = "no rows in result set"
-	queryInsertUser       = "INSERT INTO users(first_name, last_name, email, status, password, date_created) VALUES(?,?,?,?,?,?);"
-	queryGetUser          = "SELECT id, first_name, last_name, email, date_created FROM users WHERE id=?;"
-	queryUpdateUser       = "UPDATE users SET first_name=? , last_name=?, email=? WHERE id=?;"
-	queryDeleteUser       = "DELETE FROM users WHERE id=?;"
-	queryFindUserByStatus = "SELECT id, first_name, last_name, email, date_created, status FROM users WHERE status=?;"
+	errNoRow	          		= "no rows in result set"
+	queryInsertUser       		= "INSERT INTO users(first_name, last_name, email, status, password, date_created) VALUES(?,?,?,?,?,?);"
+	queryGetUser          		= "SELECT id, first_name, last_name, email, date_created FROM users WHERE id=?;"
+	queryUpdateUser       		= "UPDATE users SET first_name=? , last_name=?, email=? WHERE id=?;"
+	queryDeleteUser       		= "DELETE FROM users WHERE id=?;"
+	queryFindUserByStatus 		= "SELECT id, first_name, last_name, email, date_created, status FROM users WHERE status=?;"
+	queryFindByEmailAndPassword = "SELECT id, first_name, last_name, email, date_created, status FROM users WHERE email=? AND password=?"
 )
 
 var (
@@ -157,3 +158,27 @@ func (user *User) FindByStatus(status string) ([]User, *errors.RestErr) {
 	return results, nil
 
 }  
+
+
+func (user *User) FindByEmailAndPassword() *errors.RestErr {
+
+	stmt, err := users_db.Client.Prepare(queryFindByEmailAndPassword)
+	if err != nil {
+		logger.Error("error when trying to prepare get user statement", err)
+		return errors.NewInternalServerError("database error")
+	}
+	defer stmt.Close()
+
+
+	result := stmt.QueryRow(user.Email, user.Password)
+	if err := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated, &user.Status); err != nil {
+		if strings.Contains(err.Error(), errNoRow) {
+			return errors.NewNotFoundError(fmt.Sprintf("user with email %s not found", user.Email))
+		}
+		logger.Error(fmt.Sprintf("error when trying to get user by id %d", user.Id), err)
+		return errors.NewInternalServerError("database error")
+	}
+
+
+	return nil
+}
