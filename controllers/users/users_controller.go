@@ -8,6 +8,7 @@ import (
 	"github.com/abhishekbhar/bookstore-users-api/domain/users"
 	"github.com/abhishekbhar/bookstore-users-api/services"
 	"github.com/abhishekbhar/bookstore-users-api/utils/errors"
+	"github.com/abhishekbhar/bookstore-oauth-go/oauth"
 )
 
 
@@ -43,6 +44,11 @@ func Create(c *gin.Context) {
 	
 
 func Get(c *gin.Context) {
+	if err := oauth.AuthenticateRequest(c.Request); err != nil {
+		c.JSON(err.Status, err)
+		return
+	}
+
 	userId, err := getUserId(c.Param("user_id"))
 	if err != nil {
 		c.JSON(err.Status, err)
@@ -55,7 +61,11 @@ func Get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, user.Marshall(c.GetHeader("x-Public") == "true"))
+	if oauth.GetCallerId(c.Request) == user.Id {
+		c.JSON(http.StatusOK, user.Marshall(false))
+		return
+	}
+	c.JSON(http.StatusOK, user.Marshall(oauth.IsPublic(c.Request)))
 }
 
 
